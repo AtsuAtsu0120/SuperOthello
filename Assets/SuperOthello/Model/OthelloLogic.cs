@@ -1,4 +1,5 @@
-﻿using MessagePipe;
+﻿using System.Collections.Generic;
+using MessagePipe;
 using UnityEngine;
 using VContainer;
 using R3;
@@ -9,8 +10,6 @@ namespace SuperOthello.Model
     public class OthelloLogic : IInitializable
     {
         private readonly ISubscriber<CellPosition> _putSubscriber;
-        private readonly IPublisher<CellState[,]> _boardPublisher;
-
         private OthelloGame _game;
         
         
@@ -20,19 +19,10 @@ namespace SuperOthello.Model
         }
         
         [Inject] 
-        public OthelloLogic(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher)
+        public OthelloLogic(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher)
         {
-            _putSubscriber = putSubscriber;
-            _boardPublisher = boardPublisher;
-            
-            Injected();
-        }
-
-        private void Injected()
-        {
+            _game = new(boardPublisher, canPutPublisher);
             _putSubscriber.Subscribe(_ => Debug.Log("aaa"));
-
-            _game = new(_boardPublisher);
         }
     }
 }

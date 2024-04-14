@@ -1,9 +1,13 @@
-﻿namespace SuperOthello.Model
+﻿using System;
+using UnityEngine;
+
+namespace SuperOthello.Model
 {
-    public readonly struct CellPosition
+    [Serializable]
+    public struct CellPosition
     {
-        public int Row { get; }
-        public int Column { get; }
+        [field:SerializeField] public int Row { get; private set; }
+        [field:SerializeField] public int Column { get; private set; }
         
         public CellPosition(int row, int column)
         {

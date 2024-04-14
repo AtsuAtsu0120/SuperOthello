@@ -12,11 +12,13 @@ namespace SuperOthello.View
         [SerializeField] private GameObject _piece;
         
         private ISubscriber<CellState[,]> _boardSubscriber;
+        private ISubscriber<IEnumerable<(int row, int column)>> _canPutSubscriber;
         
         [Inject]
-        private void Constructor(ISubscriber<CellState[,]> boardSubscriber)
+        private void Constructor(ISubscriber<CellState[,]> boardSubscriber, ISubscriber<IEnumerable<(int row, int column)>> canPutSubscriber)
         {
             _boardSubscriber = boardSubscriber;
+            _canPutSubscriber = canPutSubscriber;
             
             Injected();
         }
@@ -24,6 +26,7 @@ namespace SuperOthello.View
         private void Injected()
         {
             _boardSubscriber.Subscribe(board => UpdateBoard(board));
+            _canPutSubscriber.Subscribe(list => ShowCanPutPosition(list));
         }
 
         private void UpdateBoard(in CellState[,] board)
@@ -40,6 +43,11 @@ namespace SuperOthello.View
 
                 index++;
             }
+        }
+
+        private void ShowCanPutPosition(in IEnumerable<(int row, int column)> positionList)
+        {
+            
         }
     }
 }

@@ -5,8 +5,7 @@ namespace SuperOthello.View
 {
     public class Cell : MonoBehaviour
     {
-        [field:SerializeField] public int Row { get; private set; }
-        [field:SerializeField] public int Column { get; private set; }
+        [field: SerializeField] public CellPosition CellPosition;
 
         public void Put(GameObject piecePrefab, CellState state)
         {
@@ -20,6 +19,11 @@ namespace SuperOthello.View
             {
                 piece.transform.Rotate(180, 0, 0);
             }
+        }
+
+        public void ShowCanPutEffect()
+        {
+            
         }
     }
 }

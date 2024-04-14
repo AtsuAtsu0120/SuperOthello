@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using MessagePipe;
 using SuperOthello.Model;
 using VContainer;
@@ -13,6 +15,7 @@ namespace SuperOthello
 
             builder.RegisterMessageBroker<CellPosition>(options);
             builder.RegisterMessageBroker<CellState[,]>(options);
+            builder.RegisterMessageBroker<IEnumerable<(int row, int column)>>(options);
             
             builder.Register<OthelloLogic>(Lifetime.Singleton);
             builder.RegisterEntryPoint<OthelloLogic>();

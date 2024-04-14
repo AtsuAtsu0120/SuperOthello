@@ -41,7 +41,7 @@ namespace SuperOthello.Provider
             {
                 if (_hits[0].collider.TryGetComponent<Cell>(out var component))
                 {
-                    _putPublisher.Publish(new CellPosition(component.Row, component.Column));
+                    _putPublisher.Publish(component.CellPosition);
                 }
             }
         }

@@ -10,13 +10,15 @@ namespace SuperOthello.Model
     {
         private readonly CellState[,] _board;
         private readonly IPublisher<CellState[,]> _boardPublisher;
+        private readonly IPublisher<IEnumerable<(int row, int column)>> _canPutPublisher;
 
         private const int RowLength = 8;
         private const int ColumnLength = 8;
 
-        public OthelloGame(IPublisher<CellState[,]> boardPublisher)
+        public OthelloGame(IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher)
         {
             _boardPublisher = boardPublisher;
+            _canPutPublisher = canPutPublisher;
             
             _board = new CellState[RowLength, ColumnLength];
             _board[3, 3] = CellState.Black;
@@ -26,11 +28,8 @@ namespace SuperOthello.Model
             
             _boardPublisher.Publish(_board);
 
-            var list = GetEnablePutPosition(false);
-            foreach (var place in list)
-            {
-                Debug.Log($"{place.row}:{place.column}");
-            }
+            var canPutPositionList = GetEnablePutPosition(false);
+            _canPutPublisher.Publish(canPutPositionList);
         }
 
         private IEnumerable<(int row, int column)> GetEnablePutPosition(bool isBlackTurn)
