@@ -1,0 +1,54 @@
+{
+    "name": "OthelloInputActions",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "3eba0e1c-a889-48cf-b7d9-07e283dc5bb2",
+            "actions": [
+                {
+                    "name": "Click",
+                    "type": "Button",
+                    "id": "654fff42-d2b3-4594-a21f-4392f85a5f6b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Position",
+                    "type": "PassThrough",
+                    "id": "0945b6df-eccf-4e76-9f4b-ddf1717b215e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f0497129-34ac-4e46-ad08-d2ec11676d23",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "66bb53c1-e7bb-42fd-a4f3-88c8fd60ccf4",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
