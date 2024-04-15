@@ -12,8 +12,8 @@ namespace SuperOthello.Model
         private readonly IPublisher<CellState[,]> _boardPublisher;
         private readonly IPublisher<IEnumerable<(int row, int column)>> _canPutPublisher;
 
-        private const int RowLength = 8;
-        private const int ColumnLength = 8;
+        public const int RowLength = 8;
+        public const int ColumnLength = 8;
 
         public OthelloGame(IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher)
         {
@@ -116,7 +116,7 @@ namespace SuperOthello.Model
         public void Put(CellPosition position, bool isBlackTurn)
         {
             // RowとColumnが逆になってる…表示側の指定の問題だと思われる。
-            _board[position.Column, position.Row] = isBlackTurn ? CellState.Black : CellState.White;
+            _board[position.Row, position.Column] = isBlackTurn ? CellState.Black : CellState.White;
             _boardPublisher.Publish(_board);
         }
     }

@@ -7731,7 +7731,8 @@ MonoBehaviour:
   - {fileID: 1190727986}
   - {fileID: 2138103118}
   - {fileID: 1232834149}
-  _piece: {fileID: 1078850076171626515, guid: e80127270bf7e3d458b266ed7e293667, type: 3}
+  _piecePrefab: {fileID: 1078850076171626515, guid: e80127270bf7e3d458b266ed7e293667,
+    type: 3}
 --- !u!1001 &2138103116
 PrefabInstance:
   m_ObjectHideFlags: 0

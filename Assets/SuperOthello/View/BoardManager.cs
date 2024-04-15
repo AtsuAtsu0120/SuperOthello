@@ -9,7 +9,7 @@ namespace SuperOthello.View
     public class BoardManager : MonoBehaviour
     {
         [SerializeField] private List<Cell> _cells;
-        [SerializeField] private GameObject _piece;
+        [SerializeField] private GameObject _piecePrefab;
         
         private ISubscriber<CellState[,]> _boardSubscriber;
         private ISubscriber<IEnumerable<(int row, int column)>> _canPutSubscriber;
@@ -35,13 +35,14 @@ namespace SuperOthello.View
             {
                 return;
             }
-            
-            int index = 0;
-            foreach (var state in board)
-            {
-                _cells[index].Put(_piece, state);
 
-                index++;
+            for (var row = 0; row < OthelloGame.RowLength; row++)
+            {
+                for (var column = 0; column < OthelloGame.ColumnLength; column++)
+                {
+                    var index = column * 8 + row;
+                    _cells[index].Put(_piecePrefab, board[row, column]);
+                }
             }
         }
 
