@@ -17,7 +17,7 @@ namespace SuperOthello.Model
         {
             _putSubscriber = putSubscriber;
             _game = new(boardPublisher, canPutPublisher);
-            _putSubscriber.Subscribe(_ => Debug.Log("aaa"));
+            _putSubscriber.Subscribe(position => _game.Put(position, false));
         }
         public void Initialize()
         {

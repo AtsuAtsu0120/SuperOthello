@@ -6,6 +6,7 @@ namespace SuperOthello.View
     public class Cell : MonoBehaviour
     {
         [field: SerializeField] public CellPosition CellPosition { get; private set; }
+        public bool CanPut { get; private set; }
 
         public void Put(GameObject piecePrefab, CellState state)
         {
@@ -24,6 +25,7 @@ namespace SuperOthello.View
         public void ShowCanPutEffect()
         {
             transform.GetChild(0).gameObject.SetActive(true);
+            CanPut = true;
         }
     }
 }

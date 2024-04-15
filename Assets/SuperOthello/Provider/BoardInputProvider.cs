@@ -39,7 +39,7 @@ namespace SuperOthello.Provider
             var mousePosition = _actions.Player.Position.ReadValue<Vector2>();
             if (Physics.RaycastNonAlloc(Camera.main.ScreenPointToRay(mousePosition), _hits) > 0)
             {
-                if (_hits[0].collider.TryGetComponent<Cell>(out var component))
+                if (_hits[0].collider.TryGetComponent<Cell>(out var component) && component.CanPut)
                 {
                     _putPublisher.Publish(component.CellPosition);
                 }

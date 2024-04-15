@@ -112,5 +112,12 @@ namespace SuperOthello.Model
             
             return false;
         }
+
+        public void Put(CellPosition position, bool isBlackTurn)
+        {
+            // RowとColumnが逆になってる…表示側の指定の問題だと思われる。
+            _board[position.Column, position.Row] = isBlackTurn ? CellState.Black : CellState.White;
+            _boardPublisher.Publish(_board);
+        }
     }
 }
