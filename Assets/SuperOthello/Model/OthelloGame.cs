@@ -56,6 +56,7 @@ namespace SuperOthello.Model
             {
                 for (var row = -1; row < 2; row++)
                 {
+                    _turnableList.Clear();
                     // どちらも0は自分を調べることになるので、なし
                     if (row is 0 && column is 0)
                     {
@@ -71,12 +72,12 @@ namespace SuperOthello.Model
                     }
                     if (_board[checkRow, checkColumn] == opponentColorState)
                     {
-                        _turnableList.Clear();
-                        CanTurnOver(direction, checkRow, checkColumn);
-
-                        foreach (var cellPosition in _turnableList)
+                        if (CanTurnOver(direction, checkRow, checkColumn))
                         {
-                            _board[cellPosition.Row, cellPosition.Column] = _isBlackTurn ? CellState.Black : CellState.White;
+                            foreach (var cellPosition in _turnableList)
+                            {
+                                _board[cellPosition.Row, cellPosition.Column] = _isBlackTurn ? CellState.Black : CellState.White;
+                            }   
                         }
                     }
 
@@ -184,9 +185,10 @@ namespace SuperOthello.Model
             var diff = OthelloUtility.GetPositionDifferenceByDirection(direction);
 
             (int row, int column) nextPosition = (row + diff.row, column + diff.column);
-            if (nextPosition.row >= RowLength || nextPosition.column >= ColumnLength || nextPosition.row < 0 || nextPosition.column < 0)
+            if (nextPosition.row >= RowLength || nextPosition.column >= ColumnLength 
+                                              || nextPosition.row < 0 || nextPosition.column < 0)
             {
-                return false;                
+                return false;
             }
             var nextCellState = _board[nextPosition.row, nextPosition.column];
             if (nextCellState != newColor && nextCellState != CellState.Empty)
@@ -194,7 +196,12 @@ namespace SuperOthello.Model
                 return CanTurnOver(direction, nextPosition.row, nextPosition.column);
             }
 
-            return true;
+            if(nextCellState == newColor)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void CountPieces()
