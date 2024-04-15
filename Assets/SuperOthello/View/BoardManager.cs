@@ -48,10 +48,14 @@ namespace SuperOthello.View
 
         private void ShowCanPutPosition(in IEnumerable<(int row, int column)> positionList)
         {
+            foreach (var cell in _cells)
+            {
+                cell.CanPut = false;
+            }
             foreach (var (row, column) in positionList)
             {
                 var index = column * 8 + row;
-                _cells[index].ShowCanPutEffect();
+                _cells[index].CanPut = true;
             }
         }
     }
