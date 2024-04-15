@@ -28,7 +28,7 @@ namespace SuperOthello.Model
             
             _boardPublisher.Publish(_board);
 
-            var canPutPositionList = GetEnablePutPosition(false);
+            var canPutPositionList = GetEnablePutPosition(true);
             _canPutPublisher.Publish(canPutPositionList);
         }
 
