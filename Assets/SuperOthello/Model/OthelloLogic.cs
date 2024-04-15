@@ -13,11 +13,11 @@ namespace SuperOthello.Model
         private OthelloGame _game;
         
         [Inject] 
-        public OthelloLogic(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher)
+        public OthelloLogic(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
         {
             _putSubscriber = putSubscriber;
-            _game = new(boardPublisher, canPutPublisher);
-            _putSubscriber.Subscribe(position => _game.Put(position, true));
+            _game = new(boardPublisher, canPutPublisher, countPublisher);
+            _putSubscriber.Subscribe(position => _game.Put(position));
         }
         public void Initialize()
         {

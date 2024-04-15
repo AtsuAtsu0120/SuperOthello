@@ -6,19 +6,22 @@ namespace SuperOthello.Model
 {
     public class OthelloGame
     {
+        public const int RowLength = 8;
+        public const int ColumnLength = 8;
+        
         private readonly CellState[,] _board;
         private readonly IPublisher<CellState[,]> _boardPublisher;
         private readonly IPublisher<IEnumerable<(int row, int column)>> _canPutPublisher;
+        private readonly IPublisher<(int black, int white)> _countPublisher;
 
         private List<CellPosition> _turnableList = new();
+        private bool _isBlackTurn;
 
-        public const int RowLength = 8;
-        public const int ColumnLength = 8;
-
-        public OthelloGame(IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher)
+        public OthelloGame(IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
         {
             _boardPublisher = boardPublisher;
             _canPutPublisher = canPutPublisher;
+            _countPublisher = countPublisher;
             
             _board = new CellState[RowLength, ColumnLength];
             _board[3, 3] = CellState.Black;
@@ -26,9 +29,10 @@ namespace SuperOthello.Model
             _board[3, 4] = CellState.White;
             _board[4, 4] = CellState.Black;
             
+            CountPieces();
             _boardPublisher.Publish(_board);
 
-            var canPutPositionList = GetEnablePutPosition(true);
+            var canPutPositionList = GetEnablePutPosition();
             _canPutPublisher.Publish(canPutPositionList);
 
             _turnableList.Capacity = 6;
@@ -38,14 +42,13 @@ namespace SuperOthello.Model
         /// オセロのコマを置く
         /// </summary>
         /// <param name="position">置く場所</param>
-        /// <param name="isBlackTurn">黒のターンかどうか</param>
         [BurstCompatible]
-        public void Put(CellPosition position, bool isBlackTurn)
+        public void Put(CellPosition position)
         {
-            _board[position.Row, position.Column] = isBlackTurn ? CellState.Black : CellState.White;
+            _board[position.Row, position.Column] = _isBlackTurn ? CellState.Black : CellState.White;
             
             // 相手の色を取得
-            var opponentColorState = isBlackTurn ? CellState.White : CellState.Black;
+            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
             
             // 自分のセルの周りのセルを確認して、ひっくり返す
             var direction = Direction.TopLeft;
@@ -73,7 +76,7 @@ namespace SuperOthello.Model
 
                         foreach (var cellPosition in _turnableList)
                         {
-                            _board[cellPosition.Row, cellPosition.Column] = isBlackTurn ? CellState.Black : CellState.White;
+                            _board[cellPosition.Row, cellPosition.Column] = _isBlackTurn ? CellState.Black : CellState.White;
                         }
                     }
 
@@ -81,22 +84,24 @@ namespace SuperOthello.Model
                 }
             }
             
+            CountPieces();
             _boardPublisher.Publish(_board);
+            _isBlackTurn = !_isBlackTurn;
             
-            var canPutPositionList = GetEnablePutPosition(isBlackTurn);
+            var canPutPositionList = GetEnablePutPosition();
             _canPutPublisher.Publish(canPutPositionList);
         }
         
         
-        private IEnumerable<(int row, int column)> GetEnablePutPosition(bool isBlackTurn)
+        private IEnumerable<(int row, int column)> GetEnablePutPosition()
         {
             // 自分の色を取得
-            var playerColorState = isBlackTurn ? CellState.Black : CellState.White;
+            var playerColorState = _isBlackTurn ? CellState.Black : CellState.White;
             // 自分の色のセルを取得
             var cellPositions = GetPlayerColorCellPosition(playerColorState);
 
             // 相手の色を取得
-            var opponentColorState = isBlackTurn ? CellState.White : CellState.Black;
+            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
             
             // 自分のセルの周りのセルを確認して、置ける位置を確認する。
             foreach (var cell in cellPositions)
@@ -174,7 +179,7 @@ namespace SuperOthello.Model
 
         private bool CanTurnOver(Direction direction, int row, int column)
         {
-            var newColor = _board[row, column] == CellState.Black ? CellState.White : CellState.Black;
+            var newColor = _isBlackTurn ? CellState.Black : CellState.White;
             _turnableList.Add(new CellPosition(row, column));
             var diff = OthelloUtility.GetPositionDifferenceByDirection(direction);
 
@@ -190,6 +195,25 @@ namespace SuperOthello.Model
             }
 
             return true;
+        }
+
+        private void CountPieces()
+        {
+            var black = 0;
+            var white = 0;
+            foreach (var cellState in _board)
+            {
+                if (cellState == CellState.Black)
+                {
+                    black++;
+                }
+                else if (cellState == CellState.White)
+                {
+                    white++;
+                }
+            }
+            
+            _countPublisher.Publish((black, white));
         }
     }
 }
