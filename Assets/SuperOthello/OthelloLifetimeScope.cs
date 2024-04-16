@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using MessagePipe;
 using SuperOthello.Model;
-using UnityEditor.Experimental.GraphView;
 using VContainer;
 using VContainer.Unity;
 
@@ -20,6 +18,7 @@ namespace SuperOthello
             builder.RegisterMessageBroker<(int Blackboard, int white)>(options);
             
             builder.Register<OthelloLogic>(Lifetime.Singleton);
+            builder.Register<OthelloGame>(Lifetime.Transient);
             builder.RegisterEntryPoint<OthelloLogic>();
         }
     }

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using MessagePipe;
 using Unity.Collections;
+using VContainer;
+using VContainer.Unity;
 
 namespace SuperOthello.Model
 {
-    public class OthelloGame
+    public class OthelloGame : IInitializable
     {
         public const int RowLength = 8;
         public const int ColumnLength = 8;
@@ -17,11 +19,14 @@ namespace SuperOthello.Model
         private List<CellPosition> _turnableList = new();
         private bool _isBlackTurn;
 
-        public OthelloGame(IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
+        [Inject]
+        public OthelloGame(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<IEnumerable<(int row, int column)>> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
         {
             _boardPublisher = boardPublisher;
             _canPutPublisher = canPutPublisher;
             _countPublisher = countPublisher;
+            
+            putSubscriber.Subscribe(Put);
             
             _board = new CellState[RowLength, ColumnLength];
             _board[3, 3] = CellState.Black;
@@ -221,6 +226,11 @@ namespace SuperOthello.Model
             }
             
             _countPublisher.Publish((black, white));
+        }
+
+        public void Initialize()
+        {
+            
         }
     }
 }
