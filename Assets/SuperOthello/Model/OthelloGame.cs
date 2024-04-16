@@ -42,52 +42,31 @@ namespace SuperOthello.Model
 
             _turnableList.Capacity = 6;
         }
+        public void Initialize()
+        {
+            
+        }
         
         /// <summary>
         /// オセロのコマを置く
         /// </summary>
         /// <param name="position">置く場所</param>
         [BurstCompatible]
-        public void Put(CellPosition position)
+        private void Put(CellPosition position)
         {
             _board[position.Row, position.Column] = _isBlackTurn ? CellState.Black : CellState.White;
-            
-            // 相手の色を取得
-            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
-            
-            // 自分のセルの周りのセルを確認して、ひっくり返す
-            var direction = Direction.TopLeft;
-            for (var column = -1; column < 2; column++)
-            {
-                for (var row = -1; row < 2; row++)
-                {
-                    _turnableList.Clear();
-                    // どちらも0は自分を調べることになるので、なし
-                    if (row is 0 && column is 0)
-                    {
-                        direction++;
-                        continue;
-                    }
-                    
-                    var checkRow = position.Row + row;
-                    var checkColumn = position.Column + column;
-                    if (checkRow >= RowLength || checkColumn >= ColumnLength || checkRow < 0 || checkColumn < 0)
-                    {
-                        continue;
-                    }
-                    if (_board[checkRow, checkColumn] == opponentColorState)
-                    {
-                        if (CanTurnOver(direction, checkRow, checkColumn))
-                        {
-                            foreach (var cellPosition in _turnableList)
-                            {
-                                _board[cellPosition.Row, cellPosition.Column] = _isBlackTurn ? CellState.Black : CellState.White;
-                            }   
-                        }
-                    }
 
-                    direction++;
+            var aroundList = GetAround(position);
+            foreach (var (direction, row, column) in aroundList)
+            {
+                if (CanTurnOver(direction, row, column))
+                {
+                    foreach (var cellPosition in _turnableList)
+                    {
+                        _board[cellPosition.Row, cellPosition.Column] = _isBlackTurn ? CellState.Black : CellState.White;
+                    }
                 }
+                _turnableList.Clear();
             }
             
             CountPieces();
@@ -105,41 +84,17 @@ namespace SuperOthello.Model
             var playerColorState = _isBlackTurn ? CellState.Black : CellState.White;
             // 自分の色のセルを取得
             var cellPositions = GetPlayerColorCellPosition(playerColorState);
-
-            // 相手の色を取得
-            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
             
             // 自分のセルの周りのセルを確認して、置ける位置を確認する。
-            foreach (var cell in cellPositions)
+            foreach (var position in cellPositions)
             {
-                var direction = Direction.TopLeft;
-                for (var column = -1; column < 2; column++)
+                var aroundList = GetAround(position);
+                foreach (var (direction, row, column) in aroundList)
                 {
-                    for (var row = -1; row < 2; row++)
+                    if (CanPut(direction, row, column))
                     {
-                        // どちらも0は自分を調べることになるので、なし
-                        if (row is 0 && column is 0)
-                        {
-                            direction++;
-                            continue;
-                        }
-                        
-                        var checkRow = cell.Row + row;
-                        var checkColumn = cell.Column + column;
-                        if (checkRow >= RowLength || checkColumn >= ColumnLength || checkRow < 0 || checkColumn < 0)
-                        {
-                            continue;
-                        }
-                        if (_board[checkRow, checkColumn] == opponentColorState)
-                        {
-                            if (CanPut(opponentColorState, direction, checkRow, checkColumn))
-                            {
-                                var positionDiff = OthelloUtility.GetPositionDifferenceByDirection(direction);
-                                yield return (checkRow + positionDiff.row, checkColumn + positionDiff.column);
-                            }
-                        }
-
-                        direction++;
+                        var positionDiff = OthelloUtility.GetPositionDifferenceByDirection(direction);
+                        yield return (row + positionDiff.row, column + positionDiff.column);
                     }
                 }
             }
@@ -165,12 +120,13 @@ namespace SuperOthello.Model
             return _board[row - positionDiff.row, column - positionDiff.column];
         }
 
-        private bool CanPut(CellState opponentColorState, Direction direction, int row, int column)
+        private bool CanPut(Direction direction, int row, int column)
         {
+            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
             var state = GetNextCellState(direction, row, column);
             if (state == opponentColorState)
             {
-                if (CanPut(opponentColorState, direction, row, column))
+                if (CanPut(direction, row, column))
                 {
                     return true;
                 }
@@ -228,9 +184,38 @@ namespace SuperOthello.Model
             _countPublisher.Publish((black, white));
         }
 
-        public void Initialize()
+        private IEnumerable<(Direction direction, int row, int column)> GetAround(CellPosition position)
         {
+            // 相手の色を取得
+            var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
             
+            var direction = Direction.TopLeft;
+            for (var column = -1; column < 2; column++)
+            {
+                for (var row = -1; row < 2; row++)
+                {
+                    // どちらも0は自分を調べることになるので、なし
+                    if (row is 0 && column is 0)
+                    {
+                        direction++;
+                        continue;
+                    }
+                        
+                    var checkRow = position.Row + row;
+                    var checkColumn = position.Column + column;
+                    if (checkRow >= RowLength || checkColumn >= ColumnLength || checkRow < 0 || checkColumn < 0)
+                    {
+                        direction++;
+                        continue;
+                    }
+                    if (_board[checkRow, checkColumn] == opponentColorState)
+                    {
+                        yield return (direction, checkRow, checkColumn);
+                    }
+
+                    direction++;
+                }
+            }
         }
     }
 }

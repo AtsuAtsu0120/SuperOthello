@@ -55,6 +55,10 @@ namespace SuperOthello.View
             foreach (var (row, column) in positionList)
             {
                 var index = column * 8 + row;
+                if (index < 0 || index >= OthelloGame.ColumnLength * OthelloGame.RowLength)
+                {
+                    return;   
+                }
                 _cells[index].CanPut = true;
             }
         }
