@@ -41,7 +41,7 @@ namespace SuperOthello.View
                 for (var column = 0; column < OthelloGame.ColumnLength; column++)
                 {
                     var index = column * 8 + row;
-                    _cells[index].Put(_piecePrefab, board[row, column]);
+                    _cells[index].Put(board[row, column]);
                 }
             }
         }

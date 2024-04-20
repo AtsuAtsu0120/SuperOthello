@@ -155,3 +155,5 @@ MonoBehaviour:
   <CellPosition>k__BackingField:
     <Row>k__BackingField: 0
     <Column>k__BackingField: 0
+  _piecePrefab: {fileID: 1078850076171626515, guid: e80127270bf7e3d458b266ed7e293667,
+    type: 3}
