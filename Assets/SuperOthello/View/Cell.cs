@@ -4,16 +4,18 @@ using LitMotion.Extensions;
 using R3;
 using SuperOthello.Model;
 using UnityEngine;
+using UnityEngine.VFX;
 
 namespace SuperOthello.View
 {
     public class Cell : MonoBehaviour
     {
-        public bool CanPut
+        public (bool canPut, bool isBlackTurn) CanPutInfo
         {
-            get => _canPut.Value;
-            set => _canPut.Value = value;
-        } 
+            get => _canPutInfo.Value;
+            set => _canPutInfo.Value = value;
+        }
+        
         [field: SerializeField] public CellPosition CellPosition { get; private set; }
         public CellState State 
         { 
@@ -22,14 +24,29 @@ namespace SuperOthello.View
         }
 
         [SerializeField] private GameObject _piecePrefab;
-
+        [SerializeField] private VisualEffect _canputEffect;
+        
         private GameObject _piece;
         private ReactiveProperty<CellState> _state = new();
-        private readonly ReactiveProperty<bool> _canPut = new();
+        private readonly ReactiveProperty<(bool canPut, bool isBlackTurn)> _canPutInfo = new();
+        
+        private static readonly int VFXColorProperty = Shader.PropertyToID("IsBlackTurn");
+        private const float AnimationTime = 0.2f;
 
         private void Awake()
         {
-            _canPut.Subscribe(value => transform.GetChild(0).gameObject.SetActive(value)).AddTo(this);
+            _canPutInfo.Subscribe(value =>
+            {
+                _canputEffect.SetBool(VFXColorProperty, value.isBlackTurn);
+                if (value.canPut)
+                {
+                    _canputEffect.Play();
+                }
+                else
+                {
+                    _canputEffect.Stop();
+                }
+            }).AddTo(this);
             
             _state.Pairwise()
                 .Where(state => state.Current is CellState.Black or CellState.White && state.Previous is CellState.Empty)
@@ -38,20 +55,41 @@ namespace SuperOthello.View
                 .Where(state => state.Current is CellState.Black or CellState.White && state.Previous is not CellState.Empty)
                 .Subscribe(state => OnChangeColor(state.Current)).AddTo(this);
         }
-
+        
         public async void Put(CellState state)
         {
             await UniTask.WaitUntil(() => didAwake);
             State = state;
         }
-
+        
         private async void OnChangeColor(CellState state)
         {
-            await LMotion.Create(_piece.transform.position.y, 10f, 3f)
+            var positionY = _piece.transform.position.y;
+            await LMotion.Create(positionY, 2f, AnimationTime)
+                .WithEase(Ease.OutQuad).BindToPositionY(_piece.transform);
+            
+            if (state is CellState.Black)
+            {
+                await LMotion.Create(0f, 180f, AnimationTime)
+                    .BindToLocalEulerAnglesX(_piece.transform);
+                
+                // 謎にTweenの前にRotationが戻るときがあるので、強制的に変える
+                _piece.transform.localEulerAngles = new (180f, 0f, 0f);
+            }
+            else
+            {
+                await LMotion.Create(180f, 0f, AnimationTime)
+                    .BindToLocalEulerAnglesX(_piece.transform);
+                
+                // 謎にTweenの前にRotationが戻るときがあるので、強制的に変える
+                _piece.transform.localEulerAngles = new (0f, 0f, 0f);
+            }
+            
+            await LMotion.Create(_piece.transform.position.y, positionY, AnimationTime)
                 .WithEase(Ease.OutQuad).BindToPositionY(_piece.transform);
         }
 
-        private void OnPutNew(CellState state)
+        private void OnPutNew(in CellState state)
         {
             _piece = Instantiate(_piecePrefab, transform);
 

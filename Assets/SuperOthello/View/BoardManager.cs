@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using MessagePipe;
 using SuperOthello.Model;
 using UnityEngine;
@@ -12,10 +13,10 @@ namespace SuperOthello.View
         [SerializeField] private GameObject _piecePrefab;
         
         private ISubscriber<CellState[,]> _boardSubscriber;
-        private ISubscriber<IEnumerable<(int row, int column)>> _canPutSubscriber;
+        private ISubscriber<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> _canPutSubscriber;
         
         [Inject]
-        private void Constructor(ISubscriber<CellState[,]> boardSubscriber, ISubscriber<IEnumerable<(int row, int column)>> canPutSubscriber)
+        private void Constructor(ISubscriber<CellState[,]> boardSubscriber, ISubscriber<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutSubscriber)
         {
             _boardSubscriber = boardSubscriber;
             _canPutSubscriber = canPutSubscriber;
@@ -26,7 +27,7 @@ namespace SuperOthello.View
         private void Injected()
         {
             _boardSubscriber.Subscribe(board => UpdateBoard(board));
-            _canPutSubscriber.Subscribe(list => ShowCanPutPosition(list));
+            _canPutSubscriber.Subscribe((value) => ShowCanPutPosition(value.canPutList, value.isBlackTurn));
         }
 
         private void UpdateBoard(in CellState[,] board)
@@ -46,20 +47,13 @@ namespace SuperOthello.View
             }
         }
 
-        private void ShowCanPutPosition(in IEnumerable<(int row, int column)> positionList)
+        private void ShowCanPutPosition(in IEnumerable<(int row, int column)> positionList, in bool isBlackTurn)
         {
             foreach (var cell in _cells)
             {
-                cell.CanPut = false;
-            }
-            foreach (var (row, column) in positionList)
-            {
-                var index = column * 8 + row;
-                if (index < 0 || index >= OthelloGame.ColumnLength * OthelloGame.RowLength)
-                {
-                    return;   
-                }
-                _cells[index].CanPut = true;
+                var isCanPut = positionList.Any(position =>
+                    position.row == cell.CellPosition.Row && position.column == cell.CellPosition.Column);
+                cell.CanPutInfo = (isCanPut, isBlackTurn);
             }
         }
     }
