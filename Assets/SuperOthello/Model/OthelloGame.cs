@@ -17,17 +17,21 @@ namespace SuperOthello.Model
         private readonly IPublisher<CellState[,]> _boardPublisher;
         private readonly IPublisher<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> _canPutPublisher;
         private readonly IPublisher<(int black, int white)> _countPublisher;
+        private readonly IPublisher<bool> _gameEndPublisher;
 
         private List<CellPosition> _turnableList = new();
         private bool _isBlackTurn;
         private bool _isGameEnd;
 
+        private (int blackCount, int whiteCount) _pieceCount = (0, 0);
+
         [Inject]
-        public OthelloGame(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
+        public OthelloGame(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutPublisher, IPublisher<(int black, int white)> countPublisher, IPublisher<bool> gameEndPublisher)
         {
             _boardPublisher = boardPublisher;
             _canPutPublisher = canPutPublisher;
             _countPublisher = countPublisher;
+            _gameEndPublisher = gameEndPublisher;
             
             putSubscriber.Subscribe(Put);
             
@@ -88,10 +92,9 @@ namespace SuperOthello.Model
                 // ゲームエンドフラグがたっていて、こっちも置けない場合は試合終了
                 if (_isGameEnd)
                 {
-                    Debug.Log("GameEnd");
+                    _gameEndPublisher.Publish(_pieceCount.blackCount > _pieceCount.whiteCount);
                     return;
                 }
-                Debug.Log("スキップ");
                 _isGameEnd = true;
                 NextTurn();
             }
@@ -222,7 +225,8 @@ namespace SuperOthello.Model
                     white++;
                 }
             }
-            
+
+            _pieceCount = (black, white);
             _countPublisher.Publish((black, white));
         }
 

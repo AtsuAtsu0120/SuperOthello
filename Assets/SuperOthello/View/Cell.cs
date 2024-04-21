@@ -61,7 +61,12 @@ namespace SuperOthello.View
             await UniTask.WaitUntil(() => didAwake);
             State = state;
         }
-        
+
+        public void Reset()
+        {
+            State = CellState.Empty;
+            Destroy(transform.GetChild(1).gameObject);
+        }
         private async void OnChangeColor(CellState state)
         {
             var positionY = _piece.transform.position.y;

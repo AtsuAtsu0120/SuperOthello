@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using MessagePipe;
+using R3;
 using SuperOthello.Model;
 using UnityEngine;
 using VContainer;
@@ -11,15 +12,18 @@ namespace SuperOthello.View
     {
         [SerializeField] private List<Cell> _cells;
         [SerializeField] private GameObject _piecePrefab;
+        [SerializeField] private OutGameUI _outGameUI;
         
         private ISubscriber<CellState[,]> _boardSubscriber;
         private ISubscriber<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> _canPutSubscriber;
+        private ISubscriber<bool> _gameEndSubscriber;
         
         [Inject]
-        private void Constructor(ISubscriber<CellState[,]> boardSubscriber, ISubscriber<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutSubscriber)
+        private void Constructor(ISubscriber<CellState[,]> boardSubscriber, ISubscriber<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutSubscriber, ISubscriber<bool> gameEndSubscriber)
         {
             _boardSubscriber = boardSubscriber;
             _canPutSubscriber = canPutSubscriber;
+            _gameEndSubscriber = gameEndSubscriber;
             
             Injected();
         }
@@ -28,6 +32,7 @@ namespace SuperOthello.View
         {
             _boardSubscriber.Subscribe(board => UpdateBoard(board));
             _canPutSubscriber.Subscribe((value) => ShowCanPutPosition(value.canPutList, value.isBlackTurn));
+            _gameEndSubscriber.Subscribe(OnGameEnd);
         }
 
         private void UpdateBoard(in CellState[,] board)
@@ -54,6 +59,21 @@ namespace SuperOthello.View
                 var isCanPut = positionList.Any(position =>
                     position.row == cell.CellPosition.Row && position.column == cell.CellPosition.Column);
                 cell.CanPutInfo = (isCanPut, isBlackTurn);
+            }
+        }
+
+        private void OnGameEnd(bool isBlackWin)
+        {
+            _outGameUI.OnNextGame.Subscribe(_ => OnNextGame());
+            _outGameUI.SetEndText(isBlackWin);
+            _outGameUI.SetUIActive(true);
+        }
+
+        private void OnNextGame()
+        {
+            foreach (var cell in _cells)
+            {
+                cell.Reset();
             }
         }
     }

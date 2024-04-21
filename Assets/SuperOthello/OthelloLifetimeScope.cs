@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using MessagePipe;
+using R3;
 using SuperOthello.Model;
 using VContainer;
 using VContainer.Unity;
@@ -17,6 +18,8 @@ namespace SuperOthello
             builder.RegisterMessageBroker<CellState[,]>(options);
             builder.RegisterMessageBroker<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)>(options);
             builder.RegisterMessageBroker<(int Blackboard, int white)>(options);
+            builder.RegisterMessageBroker<bool>(options);
+            builder.RegisterMessageBroker<Unit>(options);
             
             builder.Register<OthelloLogic>(Lifetime.Singleton);
             builder.Register<OthelloGame>(Lifetime.Transient);
