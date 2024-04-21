@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using MessagePipe;
 using Unity.Collections;
+using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -18,6 +20,7 @@ namespace SuperOthello.Model
 
         private List<CellPosition> _turnableList = new();
         private bool _isBlackTurn;
+        private bool _isGameEnd;
 
         [Inject]
         public OthelloGame(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutPublisher, IPublisher<(int black, int white)> countPublisher)
@@ -30,8 +33,8 @@ namespace SuperOthello.Model
             
             _board = new CellState[RowLength, ColumnLength];
             _board[3, 3] = CellState.Black;
-            _board[4, 3] = CellState.White;
             _board[3, 4] = CellState.White;
+            _board[4, 3] = CellState.White;
             _board[4, 4] = CellState.Black;
             
             CountPieces();
@@ -71,12 +74,33 @@ namespace SuperOthello.Model
             
             CountPieces();
             _boardPublisher.Publish(_board);
+
+            NextTurn();
+        }
+
+        private void NextTurn()
+        {
             _isBlackTurn = !_isBlackTurn;
             
             var canPutPositionList = GetEnablePutPosition();
+            if (!canPutPositionList.Any())
+            {
+                // ゲームエンドフラグがたっていて、こっちも置けない場合は試合終了
+                if (_isGameEnd)
+                {
+                    Debug.Log("GameEnd");
+                    return;
+                }
+                Debug.Log("スキップ");
+                _isGameEnd = true;
+                NextTurn();
+            }
+            else
+            {
+                _isGameEnd = false;
+            }
             _canPutPublisher.Publish((canPutPositionList, _isBlackTurn));
         }
-        
         
         private IEnumerable<(int row, int column)> GetEnablePutPosition()
         {
@@ -92,21 +116,11 @@ namespace SuperOthello.Model
                 foreach (var (direction, row, column) in aroundList)
                 {
                     // 次が置けたら…
-                    if (CanPutNext(direction, row, column))
+                    if (CanPutNext(direction, row, column, out var canPutPosition))
                     {
-                        var positionDiff = OthelloUtility.GetPositionDifferenceByDirection(direction);
-
-                        var nextRow = row + positionDiff.row;
-                        var nextColumn = column + positionDiff.column;
-                        if (nextRow >= RowLength || nextColumn >= ColumnLength 
-                                                          || nextRow < 0 || nextColumn < 0)
+                        if (_board[canPutPosition.Row, canPutPosition.Column] is CellState.Empty)
                         {
-                            continue;
-                        }
-                        
-                        if (_board[nextRow, nextColumn] is CellState.Empty)
-                        {
-                            yield return (nextRow, nextColumn);
+                            yield return (canPutPosition.Row, canPutPosition.Column);
                         }
                     }
                 }
@@ -127,24 +141,39 @@ namespace SuperOthello.Model
             }
         }
 
-        private CellState GetNextCellState(Direction direction, int row, int column)
+        private (CellState state, CellPosition position) GetNextCellState(Direction direction, int row, int column)
         {
             var positionDiff = OthelloUtility.GetPositionDifferenceByDirection(direction);
-            return _board[row - positionDiff.row, column - positionDiff.column];
+            
+            var nextRow = row + positionDiff.row;
+            var nextColumn = column + positionDiff.column;
+
+            if (nextRow >= RowLength || nextColumn >= ColumnLength || nextRow < 0 || nextColumn < 0)
+            {
+                return (CellState.Error, default);
+            }
+            
+            return (_board[nextRow, nextColumn], new CellPosition(nextRow, nextColumn));
         }
 
-        private bool CanPutNext(Direction direction, int row, int column)
+        private bool CanPutNext(Direction direction, int row, int column, out CellPosition canPutPosition)
         {
             var opponentColorState = _isBlackTurn ? CellState.White : CellState.Black;
-            var state = GetNextCellState(direction, row, column);
+            var (state, position) = GetNextCellState(direction, row, column);
+            canPutPosition = position;
+            
+            if (state is CellState.Error)
+            {
+                return false;
+            }
             if (state == opponentColorState)
             {
-                if (CanPutNext(direction, row, column))
+                if (CanPutNext(direction, position.Row, position.Column, out canPutPosition))
                 {
                     return true;
                 }
             }
-            else if(state != CellState.Empty)
+            else if(state is CellState.Empty)
             {
                 return true;
             }

@@ -20,7 +20,8 @@ namespace SuperOthello.Model
     {
         Empty,
         Black,
-        White
+        White,
+        Error
     }
 
     public enum Direction
