@@ -54,6 +54,14 @@ namespace SuperOthello.View
             _state.Pairwise()
                 .Where(state => state.Current is CellState.Black or CellState.White && state.Previous is not CellState.Empty)
                 .Subscribe(state => OnChangeColor(state.Current)).AddTo(this);
+            _state.Where(state => state is CellState.Empty).Subscribe(_ =>
+            {
+                State = CellState.Empty;
+                if (transform.childCount > 1)
+                {
+                    Destroy(transform.GetChild(1).gameObject);
+                }
+            });
         }
         
         public async void Put(CellState state)
@@ -61,12 +69,7 @@ namespace SuperOthello.View
             await UniTask.WaitUntil(() => didAwake);
             State = state;
         }
-
-        public void Reset()
-        {
-            State = CellState.Empty;
-            Destroy(transform.GetChild(1).gameObject);
-        }
+        
         private async void OnChangeColor(CellState state)
         {
             var positionY = _piece.transform.position.y;

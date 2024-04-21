@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using MessagePipe;
-using R3;
 using SuperOthello.Model;
 using UnityEngine;
 using VContainer;
@@ -64,17 +63,8 @@ namespace SuperOthello.View
 
         private void OnGameEnd(bool isBlackWin)
         {
-            _outGameUI.OnNextGame.Subscribe(_ => OnNextGame());
             _outGameUI.SetEndText(isBlackWin);
             _outGameUI.SetUIActive(true);
-        }
-
-        private void OnNextGame()
-        {
-            foreach (var cell in _cells)
-            {
-                cell.Reset();
-            }
         }
     }
 }

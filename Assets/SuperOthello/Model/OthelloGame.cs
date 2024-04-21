@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using MessagePipe;
 using Unity.Collections;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
 namespace SuperOthello.Model
 {
-    public class OthelloGame : IInitializable
+    public class OthelloGame : IInitializable, IDisposable
     {
         public const int RowLength = 8;
         public const int ColumnLength = 8;
@@ -25,6 +26,8 @@ namespace SuperOthello.Model
 
         private (int blackCount, int whiteCount) _pieceCount = (0, 0);
 
+        private IDisposable _disposable;
+
         [Inject]
         public OthelloGame(ISubscriber<CellPosition> putSubscriber, IPublisher<CellState[,]> boardPublisher, IPublisher<(IEnumerable<(int row, int column)> canPutList, bool isBlackTurn)> canPutPublisher, IPublisher<(int black, int white)> countPublisher, IPublisher<bool> gameEndPublisher)
         {
@@ -32,8 +35,10 @@ namespace SuperOthello.Model
             _canPutPublisher = canPutPublisher;
             _countPublisher = countPublisher;
             _gameEndPublisher = gameEndPublisher;
-            
-            putSubscriber.Subscribe(Put);
+
+            var d = DisposableBag.CreateBuilder();
+            putSubscriber.Subscribe(Put).AddTo(d);
+            _disposable = d.Build();
             
             _board = new CellState[RowLength, ColumnLength];
             _board[3, 3] = CellState.Black;
@@ -262,6 +267,11 @@ namespace SuperOthello.Model
                     direction++;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _disposable?.Dispose();
         }
     }
 }

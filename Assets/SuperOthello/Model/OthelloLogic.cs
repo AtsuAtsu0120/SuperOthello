@@ -23,6 +23,7 @@ namespace SuperOthello.Model
 
         private void InitGame()
         {
+            _game?.Dispose();
             _game = _resolver.Resolve<OthelloGame>();
         }
         public void Initialize()
